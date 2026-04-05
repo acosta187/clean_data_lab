@@ -15,12 +15,36 @@ from sklearn.cluster import AgglomerativeClustering
 # ----------------
 data = pd.DataFrame({
     "raw": [
-        "Loreto", "Loretto", "loreto ",
+        # Loreto
+        "Loreto", "Loretto", "loreto ", "LORETO", "Loreto.", " loreto", "Loretoo",
+
+        # San Juan de Lurigancho
         "San Juan de Lurigancho", "S J Lurigancho", "San Jn Luriganch",
-        "Piura", "piurra"
+        "San Juan Lurigancho", "San J. de Lurigancho", "SJL", "sjl",
+        "San Juan de Luriganch", "Sn Juan de Lurigancho", "San J de Lurigancho",
+
+        # Piura
+        "Piura", "piurra", "PIURA", "Piur", "Piuraa", " piura", "Piura.",
+
+        # Arequipa
+        "Arequipa", "arequipa", "Arequipa ", "Areqipa", "Arekipa", "AREQUIPA",
+
+        # Trujillo
+        "Trujillo", "trujilo", "Trujiyo", "TRUJILLO", "Trujillo ", "Tru jillo",
+
+        # Cusco
+        "Cusco", "Cuzco", "cusco ", "CUSCO", "Cusco.", "Kusco",
+
+        # Chiclayo
+        "Chiclayo", "chiclayo", "Chiklayo", "Chiclaio", "CHICLAYO", "Chiclayo ",
+
+        # Lima
+        "Lima", "lima", "LIMA", "Limaa", " Lima", "Lima.",
+
+        # Callao
+        "Callao", "callao", "Callao ", "Callo", "CALLAO", "Calao"
     ]
 })
-
 # ----------------
 # 2. Normalización
 # ----------------
@@ -48,7 +72,7 @@ X = vectorizer.fit_transform(data["clean"])
 clustering = AgglomerativeClustering(
     metric="cosine",
     linkage="average",
-    distance_threshold=0.3,  # ajustar según datos
+    distance_threshold=0.6,  # ajustar según datos, a mayor número, menos número de clusters
     n_clusters=None
 )
 
@@ -91,3 +115,5 @@ data_clean = data.merge(dictionary, on="raw", how="left")
 
 print("\n=== DATA LIMPIA ===")
 print(data_clean)
+
+data_clean.columns
