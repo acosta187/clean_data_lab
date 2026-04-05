@@ -1,7 +1,16 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Apr  4 21:31:32 2026
+
+@author: SUITE
+"""
+
 import pandas as pd
 import numpy as np
-import pandas as pd
+import os
+import re
 
+os.chdir("D:/Descargas/clean_data_lab-main/clean_data_lab-main/00_data_quality")
 
 from text_quality import (
     inject_noise,
@@ -10,49 +19,79 @@ from text_quality import (
     fuzzy_clean,
 )
 
+# -----------------------------
+# 1. Función de normalización
+# -----------------------------
+def normalize_text(x):
+    if pd.isna(x):
+        return x
+    x = str(x).lower()
+    x = x.strip()
+    x = re.sub(r"\s+", " ", x)  # colapsa múltiples espacios
+    return x
+
+# -----------------------------
+# 2. Master list
+# -----------------------------
 MASTER = [
     "Miraflores", "San Juan de Lurigancho", "Santiago de Surco",
     "Villa El Salvador", "Chorrillos", "San Borja", "La Molina",
     "Los Olivos", "San Miguel", "Magdalena del Mar",
 ]
 
-# 1. Generar dataset
+# Normalizar MASTER
+MASTER_NORM = [normalize_text(x) for x in MASTER]
+
+# -----------------------------
+# 3. Generar dataset con ruido
+# -----------------------------
 df = build_noisy_dataset(MASTER, n_rows=500)
 
-# 2. Auditoría inicial
-raw_audit = audit_text_quality(df["noisy"])
+# -----------------------------
+# 4. Normalizar columna noisy
+# -----------------------------
+df["noisy_norm"] = df["noisy"].apply(normalize_text)
 
-# 3. Limpieza
-df["cleaned"] = df["noisy"].apply(
-    lambda x: fuzzy_clean(x, MASTER, threshold=65)
+# -----------------------------
+# 5. Auditoría inicial
+# -----------------------------
+raw_audit = audit_text_quality(df["noisy_norm"])
+
+# -----------------------------
+# 6. Limpieza fuzzy
+# -----------------------------
+df["cleaned"] = df["noisy_norm"].apply(
+    lambda x: fuzzy_clean(x, MASTER_NORM, threshold=70)
 )
 
-# 4. Auditoría final
+# Normalizar resultado final (consistencia)
+df["cleaned"] = df["cleaned"].apply(normalize_text)
+
+# -----------------------------
+# 7. Auditoría final
+# -----------------------------
 clean_audit = audit_text_quality(df["cleaned"].fillna("NaN"))
-clean_audit
 
-
+# -----------------------------
+# 8. Separar éxito vs fallos
+# -----------------------------
 df_failed = df[df["cleaned"].isna()]
 df_success = df[df["cleaned"].notna()]
 
+# Auditoría solo de los exitosos
 clean_audit_succ = audit_text_quality(df_success["cleaned"])
-clean_audit_succ 
 
+# -----------------------------
+# 9. Outputs clave
+# -----------------------------
+print("=== AUDITORÍA INICIAL ===")
+print(raw_audit)
 
-# 5. Accuracy
+print("\n=== AUDITORÍA FINAL ===")
+print(clean_audit)
 
+print("\n=== AUDITORÍA SOLO ÉXITOS ===")
+print(clean_audit_succ)
 
-accuracy = np.mean(df_success["original"] == df_success["cleaned"]) * 100
-print(f"Accuracy: {accuracy:.2f}%")
-
-# Matriz de confusión
-conf_matrix = pd.crosstab(
-    df_success["original"], 
-    df_success["cleaned"],
-    rownames=["Actual"],
-    colnames=["Predicted"]
-)
-
-print("\n=== Confusion Matrix ===")
-print(conf_matrix)
-
+print("\nFilas fallidas:", len(df_failed))
+print("Filas exitosas:", len(df_success))
